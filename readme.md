@@ -56,7 +56,7 @@ Use Flux, Helm, cert-manager.
 * `export FLUX_FORWARD_NAMESPACE=flux`
 * Add flux ssh key to github repo with write access:
   * `fluxctl identity --k8s-fwd-ns flux`
-  * github.com/YOURUSERNAME/lemmings/settings/keys
+  * https://github.com/YOURUSERNAME/lemmings/settings/keys
 
 ## Run wild
 
@@ -91,6 +91,7 @@ Use Flux, Helm, cert-manager.
   * `brew install kubectx`
 * [github.com/vmware-tanzu/octant](https://github.com/vmware-tanzu/octant)
   * `brew install octant`
+* [keel.sh](https://keel.sh)
 
 ### Notes:
 
