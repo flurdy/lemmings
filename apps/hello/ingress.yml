@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: hello-ingress
+annotations:
+   kubernetes.io/ingress.class: nginx
+#    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+#  tls:
+#  - hosts:
+#    - hello.example.com
+#    secretName: letsencrypt-certificate-staging
+  rules:
+  - host: hello.example.com
+    http:
+      paths:
+      - backend:
+          serviceName: hello-service
+          servicePort: 80

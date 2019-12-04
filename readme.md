@@ -26,8 +26,8 @@ In time some may need tweaking, version bumping, etc.
 ### Kubernetes tools and cluster
 
 *     brew install kubectl
-* Create Kubernetes cluster
-* Set up Kubernetes context
+* Create Kubernetes cluster (see Kubernetes as a Service providers below)
+* Set up Kubernetes context (see provider CLIs and `kubectx` below)
 * Test cluster connection:
 
       kubectl cluster-info
@@ -86,12 +86,9 @@ Your GitOps configured Kubernetes cluser is now live.
 
 ## Your first application
 
-* Create a "Hello world" webapp (non-Helm)
+* We baked one earlier for you `apps/hello`:
 
-      mkdir -p apps/hello
-      touch apps/hello/deployment.yml  apps/hello/service.yml apps/hello/ingress.yml
-
-* Edit *apps/hello/deployment.yml*
+* View/Edit *apps/hello/deployment.yml*
 
       apiVersion: apps/v1
       kind: Deployment
@@ -158,7 +155,8 @@ Your GitOps configured Kubernetes cluser is now live.
 
 ### Launch application
 
-*
+* If you made any changes:
+
       git add app/hello
       git commit -m "App: Hello"
       git push
@@ -171,10 +169,17 @@ Your GitOps configured Kubernetes cluser is now live.
 * Or if impatient:
 
       fluxctl sync
+* Check if the Hello cluster resources are running
+
+      kubectl get deployment hello-deployment
+      kubectl get service hello-service
+      kubectl get ingress hello-ingress
+      kubectl get pods -l app=hello
+
 
 ### Test application
 
-* Find the ingress' `External IP`
+* Find the ingress controller's `External IP`
 
       kubectl get services nginx-ingress-controller
 
@@ -253,7 +258,7 @@ do not commit them in plain text to the Git repository.
 
 ## Go wild
 
-* Add/update your deployments, services, charts, registries, secrets, etc
+* Add/update your deployments, services, charts, docker registries, secrets, etc
 
 ## Don't touch
 

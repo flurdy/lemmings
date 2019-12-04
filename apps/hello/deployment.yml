@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: hello-deployment
+annotations:
+   flux.weave.works/automated: "true"
+spec:
+  selector:
+    matchLabels:
+      app: hello
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+      - name: hello-container
+        image: nginxdemos/hello:0.2
+        ports:
+        - containerPort: 80
