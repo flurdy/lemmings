@@ -8,7 +8,7 @@ Includes Flux, Helm, cert-manager, Nginx Ingress Controller and Sealed Secrets.
 * [helm.sh](https://helm.sh)
 * [github.com/jetstack/cert-manager](https://github.com/jetstack/cert-manager)
 * [kubernetes.github.io/ingress-nginx/](https://kubernetes.github.io/ingress-nginx/)
-* [github.com/bitnami-labs/sealed-secrets#installation](https://github.com/bitnami-labs/sealed-secrets#installation)
+* [github.com/bitnami-labs/sealed-secrets](https://github.com/bitnami-labs/sealed-secrets)
 
 ## Author
 
@@ -86,7 +86,7 @@ Your GitOps configured Kubernetes cluser is now live.
 
 ## Your first application
 
-* Create a "Hello world" webapp
+* Create a "Hello world" webapp (non-Helm)
 
       mkdir -p apps/hello
       touch apps/hello/deployment.yml  apps/hello/service.yml apps/hello/ingress.yml
@@ -158,7 +158,11 @@ Your GitOps configured Kubernetes cluser is now live.
 
 ### Launch application
 
-* Commit and push
+*
+      git add -p app/hello
+      git commit -m "App: Hello"
+      git push
+
 * Tail log:
 
       kubectl logs -n flux deploy/flux -f
@@ -170,7 +174,7 @@ Your GitOps configured Kubernetes cluser is now live.
 
 ### Test application
 
-* Find the ingress's external IP
+* Find the ingress' `External IP`
 
       kubectl get services nginx-ingress-controller
 
@@ -189,16 +193,65 @@ Your GitOps configured Kubernetes cluser is now live.
 
 ## Sealed Secrets
 
-* If you need secrets, do not commit them in plain text to the Git repository.
-* Use Sealed secrets to encrypt them.
-*
-      brew install kubeseal
-* [Managing Kubernetes secrets](https://github.com/fluxcd/helm-operator-get-started#managing-kubernetes-secrets)
+* If you need [secrets](https://kubernetes.io/docs/concepts/configuration/secret/),
+(for passwords, keys, tokens, etc),
+do not commit them in plain text to the Git repository.
+* Use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt them.
+*      brew install kubeseal
+* Fetch the cluster's Sealed Secrets' public key
 
+      kubeseal --fetch-cert \
+         --controller-namespace=kube-system \
+         --controller-name=sealed-secrets \
+         > secrets/sealed-secrets-cert.pem
+* You can add this public key to git if you want.
+
+      git add secrets/sealed-secrets-cert.pem
+      git commit -m "Sealed secret public key"
+* Create secrets but do not apply them to the cluster.
+
+   * E.g with the `--dry-run` argument.
+
+         kubectl create secret generic basic-auth \
+            --from-literal=user=admin \
+            --from-literal=password=admin \
+            --dry-run \
+            -o json > secrets/basic-auth.json
+
+* Encrypt secret and transform to a sealed secret:
+
+      kubeseal --format=yaml \
+         --cert=secrets/sealed-secrets-cert.pem \
+         < secrets/basic-auth.json \
+         > secrets/secret-basic-auth.yml
+      rm secrets/basic-auth.json
+      git add secrets/secret-basic-auth.yml
+      git commit -m "Sealed basic auth secret"
+      git push
+
+* After a little time you should see the secret in your cluster
+
+      kubectl describe secret basic-auth
+
+* Afterwards if you no longer need it, delete the file and secret:
+
+      git rm secrets/secret-basic-auth.yml
+      git commit -m "Removed basic auth"
+      git push
+      fluxctl sync
+      kubectl delete secret basic-auth
+      kubectl delete SealedSecret basic-auth
 
 ## Go wild
 
 * Add/update your deployments, services, charts, registries, secrets, etc
+
+## Don't touch
+
+* Once Flux is running, by convention avoid using `kubectl create|apply` etc.
+* Nearly all changes should be via Git and Flux.
+* Any `kubectl` interaction should be read only.
+* Flux will not remove some resources, so you might need `kubectl delete` occasionally.
 
 ## More information, alternatives, suggestions
 
@@ -210,23 +263,40 @@ Your GitOps configured Kubernetes cluser is now live.
 
 * Cloud provider CLI
   * [cloud.google.com/sdk/](https://cloud.google.com/sdk/)
-    * `brew install google-cloud-sdk`
-  * [github.com/digitalocean/doctl](https://github.com/digitalocean/doctl)
-    * `brew install doctl`
-  * [eksctl.io](https://eksctl.io/)
-    * `brew tap weaveworks/tap`
 
-      `brew install weaveworks/tap/eksctl`
+        brew install google-cloud-sdk
+
+  * [github.com/digitalocean/doctl](https://github.com/digitalocean/doctl)
+
+        brew install doctl
+  * [eksctl.io](https://eksctl.io/)
+
+        brew tap weaveworks/tap
+        brew install weaveworks/tap/eksctl
+
   * [github.com/Azure/azure-cli](https://github.com/Azure/azure-cli)
-    * `brew install azure-cli`
+
+        brew install azure-cli
+
 * [hub.github.com](https://hub.github.com)
 * [docs.fluxcd.io/en/stable/references/fluxctl.html](https://docs.fluxcd.io/en/stable/references/fluxctl.html)
 * [github.com/ahmetb/kubectx](https://github.com/ahmetb/kubectx)
-  * `brew install kubectx`
+
+      brew install kubectx
+
 * [github.com/vmware-tanzu/octant](https://github.com/vmware-tanzu/octant)
-  * `brew install octant`
+
+      brew install octant
+
+* [k9ss.io](https://k9ss.io)
+
+      brew install derailed/k9s/k9s
+
 * [keel.sh](https://keel.sh)
-* [Managing helm releases the GitOps way](https://www.weave.works/blog/managing-helm-releases-the-gitops-way)
+* [weave.works/blog/managing-helm-releases-the-gitops-way](https://www.weave.works/blog/managing-helm-releases-the-gitops-way)
+* [github.com/fluxcd/helm-operator-get-started](https://github.com/fluxcd/helm-operator-get-started)
+* [ramitsurana.github.io/awesome-kubernetes/](https://ramitsurana.github.io/awesome-kubernetes/)
+* [github.com/fluxcd/multi-tenancy](https://github.com/fluxcd/multi-tenancy)
 
 ### Notes:
 
