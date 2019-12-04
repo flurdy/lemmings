@@ -76,11 +76,11 @@ This is for Helm v2. The brand new v3 does not require Tiller.
       export FLUX_FORWARD_NAMESPACE=flux
       fluxctl identity --k8s-fwd-ns flux
 
-* Add ssh key to github repo with write access:
+* Add SSH key to your github repo with write access:
    * https://github.com/YOURUSERNAME/lemmings/settings/keys
 
 
-## Your live!
+## Your GitOps K8s is live!
 
 Your GitOps configured Kubernetes cluser is now live.
 
