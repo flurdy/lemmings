@@ -76,7 +76,7 @@ This is for Helm v2. The brand new v3 does not require Tiller.
       export FLUX_FORWARD_NAMESPACE=flux
       fluxctl identity --k8s-fwd-ns flux
 
-* Add SSH key to your github repo with write access:
+* Add Flux's SSH key to your github repo with write access:
    * https://github.com/YOURUSERNAME/lemmings/settings/keys
 
 
@@ -96,48 +96,48 @@ Your GitOps configured Kubernetes cluser is now live.
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-      name: hello-deployment
+         name: hello-deployment
       annotations:
          flux.weave.works/automated: "true"
       spec:
-      selector:
-         matchLabels:
+        selector:
+          matchLabels:
             app: hello
-      replicas: 2
-      template:
-         metadata:
+        replicas: 2
+        template:
+          metadata:
             labels:
-            app: hello
-         spec:
+              app: hello
+          spec:
             containers:
             - name: hello-container
-            image: nginxdemos/hello:0.2
-            ports:
-            - containerPort: 80
+              image: nginxdemos/hello:0.2
+              ports:
+              - containerPort: 80
 
     * Note the `flux.weave.works/automated` annotation.
-       * It may change to `fluxcd.io/automated` in Future flux versions.
+       * It will change to `fluxcd.io/automated` in Future flux versions.
 
 * Edit *apps/hello/service.yml*
 
       apiVersion: v1
       kind: Service
       metadata:
-      name: hello-service
+        name: hello-service
       spec:
-      selector:
-         app: hello
-      ports:
-      - protocol: TCP
-         port: 80
-         targetPort: 80
+        selector:
+           app: hello
+        ports:
+        - protocol: TCP
+           port: 80
+           targetPort: 80
 
 * Edit *apps/hello/ingress.yml*
 
       apiVersion: extensions/v1beta1
       kind: Ingress
       metadata:
-      name: hello-ingress
+        name: hello-ingress
       annotations:
          kubernetes.io/ingress.class: nginx
       #    cert-manager.io/cluster-issuer: letsencrypt-staging
@@ -159,7 +159,7 @@ Your GitOps configured Kubernetes cluser is now live.
 ### Launch application
 
 *
-      git add -p app/hello
+      git add app/hello
       git commit -m "App: Hello"
       git push
 
@@ -196,18 +196,27 @@ Your GitOps configured Kubernetes cluser is now live.
 * If you need [secrets](https://kubernetes.io/docs/concepts/configuration/secret/),
 (for passwords, keys, tokens, etc),
 do not commit them in plain text to the Git repository.
-* Use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt them.
-*      brew install kubeseal
+* Instead we will use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt them.
+* Check if Sealed Secrets was installed by Flux:
+
+      kube get services sealed-secrets -n kube-system
+
+* Install CLI
+
+      brew install kubeseal
+
 * Fetch the cluster's Sealed Secrets' public key
 
       kubeseal --fetch-cert \
          --controller-namespace=kube-system \
          --controller-name=sealed-secrets \
          > secrets/sealed-secrets-cert.pem
+
 * You can add this public key to git if you want.
 
       git add secrets/sealed-secrets-cert.pem
       git commit -m "Sealed secret public key"
+
 * Create secrets but do not apply them to the cluster.
 
    * E.g with the `--dry-run` argument.
