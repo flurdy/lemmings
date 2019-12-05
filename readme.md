@@ -41,12 +41,24 @@ In time some may need tweaking, version bumping, etc.
 
 ### Install Helm
 
-This is for Helm v2. The brand new v3 does not require Tiller.
+* You may already have or prefer v2 or go boldly with the just released v3
 
-    brew install kubernetes-helm@2.16.1
-    kubectl create -f tiller/serviceaccount-tiller.yml
-    kubectl create -f tiller/rbac-tiller.yml
-    helm init --service-account tiller --history-max 200
+
+#### Helm 3
+
+    brew install helm@3
+    helm repo add stable \
+       https:// kubernetes-charts.storage.googleapis.com/
+
+#### Helm 2
+
+    brew install kubernetes-helm@2
+
+* Helm 2 require `Tiller` to be running in your cluster
+
+      kubectl create -f tiller/serviceaccount-tiller.yml
+      kubectl create -f tiller/rbac-tiller.yml
+      helm init --service-account tiller --history-max 200
 
 ### Configure cert-manager
 
@@ -80,7 +92,7 @@ This is for Helm v2. The brand new v3 does not require Tiller.
    * https://github.com/YOURUSERNAME/lemmings/settings/keys
 
 
-## Your GitOps K8s is live!
+## Your GitOps based Kubernetes cluster is live!
 
 Your GitOps configured Kubernetes cluser is now live.
 
