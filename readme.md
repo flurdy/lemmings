@@ -43,7 +43,7 @@ In time some may need tweaking, version bumping, etc.
 
 This is for Helm v2. The brand new v3 does not require Tiller.
 
-    brew install kubernetes-helm
+    brew install kubernetes-helm@2.13.0
     kubectl create -f tiller/serviceaccount-tiller.yml
     kubectl create -f tiller/rbac-tiller.yml
     helm init --service-account tiller --history-max 200
