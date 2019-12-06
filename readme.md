@@ -32,6 +32,8 @@ In time some may need tweaking, version bumping, etc.
 
       kubectl cluster-info
 
+## Lemmings install
+
 ### Fork/Clone repository
 
     brew install hub
@@ -41,14 +43,26 @@ In time some may need tweaking, version bumping, etc.
 
 ### Install Helm
 
-* You may already have or prefer v2 or go boldly with the just released v3
-
+* Helm has just released v3.
+* Until Flux's Helm Operator release full v3 support, stick with Helm v2.
+   * https://github.com/fluxcd/helm-operator/issues/8
 
 #### Helm 3
 
     brew install helm@3
-    helm repo add stable \
-       https:// kubernetes-charts.storage.googleapis.com/
+
+* Vanilla Helm 3 includes no chart repositories. Lets add the core one.
+
+      helm repo add stable \
+          https:// kubernetes-charts.storage.googleapis.com/
+
+* And remove v2 Tiller
+
+      git rm tiller/serviceaccount-tiller.yml
+      git rm tiller/rbac-tiller.yml
+      rmdir tiller
+      git commit -m "Helm v3 do not need Tiller"
+      git push
 
 #### Helm 2
 
@@ -66,12 +80,13 @@ In time some may need tweaking, version bumping, etc.
   * `issuer/issuer-staging.yml`
   * `issuer/issuer-prod.yml`
 *     git add -p issuer
-      git commit -m "Updated email address in certificate issuers"
+      git commit -m "Updated email in certificate issuers"
       git push
 
 ### Install Flux
 
     helm repo add fluxcd https://charts.fluxcd.io
+    kubectl create namespace flux
     kubectl apply -f flux/crd-flux-helm.yml
     helm upgrade -i flux \
        --set helmOperator.create=true \
@@ -98,7 +113,7 @@ Your GitOps configured Kubernetes cluser is now live.
 
 ## Your first application
 
-* We baked one earlier for you `apps/hello`:
+* We baked one earlier for you: `apps/hello`:
 
 * View/Edit *apps/hello/deployment.yml*
 
@@ -323,6 +338,7 @@ do not commit them in plain text to the Git repository.
 * [github.com/fluxcd/helm-operator-get-started](https://github.com/fluxcd/helm-operator-get-started)
 * [ramitsurana.github.io/awesome-kubernetes/](https://ramitsurana.github.io/awesome-kubernetes/)
 * [github.com/fluxcd/multi-tenancy](https://github.com/fluxcd/multi-tenancy)
+* [github.com/justinbarrick/fluxcloud](https://github.com/justinbarrick/fluxcloud)
 
 ### Notes:
 

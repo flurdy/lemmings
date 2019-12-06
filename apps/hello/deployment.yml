@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-   name: hello-deployment
-annotations:
-   flux.weave.works/automated: "true"
+  name: hello-deployment
+  annotations:
+    flux.weave.works/automated: "true"
 spec:
   selector:
     matchLabels:
