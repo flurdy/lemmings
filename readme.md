@@ -49,7 +49,9 @@ In time some may need tweaking, version bumping, etc.
 
 #### Helm 3
 
-    brew install helm@3
+* Once v3 support in Flux is production ready
+
+      brew install helm@3
 
 * Vanilla Helm 3 includes no chart repositories. Lets add the core one.
 
@@ -73,6 +75,22 @@ In time some may need tweaking, version bumping, etc.
       kubectl create -f tiller/serviceaccount-tiller.yml
       kubectl create -f tiller/rbac-tiller.yml
       helm init --service-account tiller --history-max 200
+
+#### Switch from v3 to v2
+
+* In case you already have Helm 3 installed, you can revert to v2
+* https://github.com/helm/helm/issues/4547#issuecomment-423312200
+
+      brew unlink helm
+      brew install \
+       https://raw.githubusercontent.com/Homebrew/homebrew-core/2fbed24cb83d0ecc69b8004e69027e0d8eed5f9d/Formula/kubernetes-helm.rb
+      brew switch helm 2.16.1
+
+* You may have to force some links
+
+      brew link --overwrite helm
+
+
 
 ### Configure cert-manager
 
@@ -120,9 +138,9 @@ Your GitOps configured Kubernetes cluser is now live.
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-         name: hello-deployment
-      annotations:
-         flux.weave.works/automated: "true"
+        name: hello-deployment
+        annotations:
+          flux.weave.works/automated: "true"
       spec:
         selector:
           matchLabels:
@@ -162,8 +180,8 @@ Your GitOps configured Kubernetes cluser is now live.
       kind: Ingress
       metadata:
         name: hello-ingress
-      annotations:
-         kubernetes.io/ingress.class: nginx
+        annotations:
+          kubernetes.io/ingress.class: nginx
       #    cert-manager.io/cluster-issuer: letsencrypt-staging
       spec:
       #  tls:
