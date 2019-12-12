@@ -36,10 +36,16 @@ In time some may need tweaking, version bumping, etc.
 
 ### Fork/Clone repository
 
-    brew install hub
-    hub clone flurdy/lemmings
-    cd lemmings
-    hub fork --remote-name=origin
+*
+      brew install hub
+      hub clone flurdy/lemmings my-lemmings
+      cd my-lemmings
+      hub create -p my-lemmings
+      hub remote add upstream flurdy/lemmings
+      git push -u origin master
+
+* Replace _my-lemmings_ with whatever you want to call your cluster
+* Flux can also talk to Bitbucket, Gitlab and self-hosted repos
 
 ### Install Helm
 
@@ -53,12 +59,12 @@ In time some may need tweaking, version bumping, etc.
 
       brew install helm@3
 
-* Vanilla Helm 3 includes no chart repositories. Lets add the core one.
+* Vanilla Helm 3 includes no chart repositories. Lets add the core one
 
       helm repo add stable \
           https:// kubernetes-charts.storage.googleapis.com/
 
-* And remove v2 Tiller
+* And remove Helm v2's Tiller files
 
       git rm tiller/serviceaccount-tiller.yml
       git rm tiller/rbac-tiller.yml
@@ -86,7 +92,7 @@ In time some may need tweaking, version bumping, etc.
        https://raw.githubusercontent.com/Homebrew/homebrew-core/2fbed24cb83d0ecc69b8004e69027e0d8eed5f9d/Formula/kubernetes-helm.rb
       brew switch helm 2.16.1
 
-* You may have to force some links
+* You may have to force some soft links
 
       brew link --overwrite helm
 
@@ -109,29 +115,30 @@ In time some may need tweaking, version bumping, etc.
     helm upgrade -i flux \
        --set helmOperator.create=true \
        --set helmOperator.createCRD=false \
-       --set git.url=git@github.com:YOURUSERNAME/lemmings \
+       --set git.url=git@github.com:YOURUSERNAME/my-lemmings \
        --namespace flux \
        fluxcd/flux
 
-
 * Install `fluxctl` and generate SSH key
-
 
       brew install fluxctl
       export FLUX_FORWARD_NAMESPACE=flux
       fluxctl identity --k8s-fwd-ns flux
 
 * Add Flux's SSH key to your github repo with write access:
-   * https://github.com/YOURUSERNAME/lemmings/settings/keys
+   * [github.com/YOURUSERNAME/lemmings/settings/keys](https://github.com/YOURUSERNAME/lemmings/settings/keys)
 
+* Tail log:
+
+      kubectl logs -n flux deploy/flux -f
 
 ## Your GitOps based Kubernetes cluster is live!
 
-Your GitOps configured Kubernetes cluser is now live.
+If you waited a few minutes then your GitOps configured Kubernetes cluster is now live.
 
 ## Your first application
 
-* We baked one earlier for you: `apps/hello`:
+* (We baked one earlier for you: `apps/hello`)
 
 * View/Edit *apps/hello/deployment.yml*
 
@@ -158,7 +165,8 @@ Your GitOps configured Kubernetes cluser is now live.
               - containerPort: 80
 
     * Note the `flux.weave.works/automated` annotation.
-       * It will change to `fluxcd.io/automated` in Future flux versions.
+       * It will change to `fluxcd.io/automated` in future flux versions.
+       * [www.weave.works/blog/flux-joins-the-cncf-sandbox](https://www.weave.works/blog/flux-joins-the-cncf-sandbox)
 
 * Edit *apps/hello/service.yml*
 
@@ -206,10 +214,6 @@ Your GitOps configured Kubernetes cluser is now live.
       git commit -m "App: Hello"
       git push
 
-* Tail log:
-
-      kubectl logs -n flux deploy/flux -f
-
 * Wait (max 5 minutes) for *Flux* to detect your changes and apply them
 * Or if impatient:
 
@@ -229,23 +233,35 @@ Your GitOps configured Kubernetes cluser is now live.
       kubectl get services nginx-ingress-controller
 
 * Use `curl` to resolve the URL. Replace `11.22.33.44` with the external IP.
+* And `lynx` to view it
 
       curl -H "Host: hello.example.com" \
         --resolve hello.example.com:80:11.22.33.44 \
         --resolve hello.example.com:443:11.22.33.44 \
-        http://hello.example.com
-
+        http://hello.example.com | lynx -stdin
+* This should show a basic hello world page, with an Nginx logo and some server address, name and date details.
 
 ### Update application
 
-* Now if ever [hub.docker.com/r/nginxdemos/hello](https://hub.docker.com/r/nginxdemos/hello) bumps its version to higher than *0.2*, Flux will detect it and bump your version in Kubernetes, and also commit the change to your Git repository.
+* Now if ever [hub.docker.com/r/nginxdemos/hello](https://hub.docker.com/r/nginxdemos/hello) bumps its version to higher than *0.2*,
+   Flux will detect it and bump your version in Kubernetes, and also commit the change back to your Git repository.
 * Unfortunately that image has not been updated for 2 years and unlikely to be updated, but when you start to use your own images they will be automagically updated if the deployment's annotation `flux.weave.works/automated` is set to true.
+
+### Delete application
+
+    git rm -r apps/hello
+    git commit -m "Removed app Hello"
+    git push
+    fluxctl sync
+    kube delete ingress hello-ingress
+    kube delete service hello-service
+    kube delete deployment hello-deployment
 
 ## Sealed Secrets
 
 * If you need [secrets](https://kubernetes.io/docs/concepts/configuration/secret/),
-(for passwords, keys, tokens, etc),
-do not commit them in plain text to the Git repository.
+(for private docker registry authentication, database passwords, API tokens),
+DO NOT commit them in plain text to the Git repository.
 * Instead we will use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt them.
 * Check if Sealed Secrets was installed by Flux:
 
@@ -261,9 +277,6 @@ do not commit them in plain text to the Git repository.
          --controller-namespace=kube-system \
          --controller-name=sealed-secrets \
          > secrets/sealed-secrets-cert.pem
-
-* You can add this public key to git if you want.
-
       git add secrets/sealed-secrets-cert.pem
       git commit -m "Sealed secret public key"
 
@@ -283,8 +296,8 @@ do not commit them in plain text to the Git repository.
          --cert=secrets/sealed-secrets-cert.pem \
          < secrets/basic-auth.json \
          > secrets/secret-basic-auth.yml
-      rm secrets/basic-auth.json
       git add secrets/secret-basic-auth.yml
+      rm secrets/basic-auth.json
       git commit -m "Sealed basic auth secret"
       git push
 
@@ -352,6 +365,7 @@ do not commit them in plain text to the Git repository.
       brew install derailed/k9s/k9s
 
 * [keel.sh](https://keel.sh)
+* [lynx.browser.org](https://lynx.browser.org)
 * [weave.works/blog/managing-helm-releases-the-gitops-way](https://www.weave.works/blog/managing-helm-releases-the-gitops-way)
 * [github.com/fluxcd/helm-operator-get-started](https://github.com/fluxcd/helm-operator-get-started)
 * [ramitsurana.github.io/awesome-kubernetes/](https://ramitsurana.github.io/awesome-kubernetes/)
