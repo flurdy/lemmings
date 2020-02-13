@@ -1,15 +1,15 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
   name: nginx-ingress
   annotations:
-    flux.weave.works/automated: "true"
+    fluxcd.io/automated: "true"
 spec:
   releaseName: nginx-ingress
   chart:
     name: nginx-ingress
     repository: https://kubernetes-charts.storage.googleapis.com
-    version: 1.26.1
+    version: 1.29.3
   values:
     controller:
       ingressClass: nginx

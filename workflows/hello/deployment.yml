@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: hello-deployment
   annotations:
-    flux.weave.works/automated: "true"
+    fluxcd.io/automated: "true"
 spec:
   selector:
     matchLabels:

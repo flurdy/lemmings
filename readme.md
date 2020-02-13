@@ -10,15 +10,15 @@ Includes Flux, Helm, cert-manager, Nginx Ingress Controller and Sealed Secrets.
 * [kubernetes.github.io/ingress-nginx/](https://kubernetes.github.io/ingress-nginx/)
 * [github.com/bitnami-labs/sealed-secrets](https://github.com/bitnami-labs/sealed-secrets)
 
-## Author
+## Contributors
 
-* [@flurdy](https://twitter.com/flurdy) : [github.com/flurdy](https://github.com/flurdy)
+* Ivar Abrahamsen : [@flurdy](https://twitter.com/flurdy) : [github.com/flurdy](https://github.com/flurdy) : eray.uk
 
-### Disclaimer
 
-On 2019-11-07, this all worked with the current versions of tools.
-In time some may need tweaking, version bumping, etc.
+## Versions
 
+* 2020-02-13 Flux 1.1, fluxcd.io annotations, and Helm 3
+* 2019-11-07 Flux 0.16, flux.weave.works annotations and Helm 2
 
 
 ## Pre requisite
@@ -37,11 +37,11 @@ In time some may need tweaking, version bumping, etc.
 ### Fork/Clone repository
 
 *
-      brew install hub
-      hub clone flurdy/lemmings my-lemmings
-      cd my-lemmings
-      hub create -p my-lemmings
-      hub remote add upstream flurdy/lemmings
+      brew install hub;
+      hub clone flurdy/lemmings my-lemmings;
+      cd my-lemmings;
+      hub create -p my-lemmings;
+      hub remote add upstream flurdy/lemmings;
       git push -u origin master
 
 * Replace _my-lemmings_ with whatever you want to call your cluster
@@ -49,13 +49,11 @@ In time some may need tweaking, version bumping, etc.
 
 ### Install Helm
 
-* Helm has just released v3.
-* Until Flux's Helm Operator release full v3 support, stick with Helm v2.
-   * https://github.com/fluxcd/helm-operator/issues/8
+* Helm released v3 in November 2019.
+* If you have other clusters using Helm 2 tread carefully to make sure you can support both v2 and v3.
+
 
 #### Helm 3
-
-* Once v3 support in Flux is production ready
 
       brew install helm@3
 
@@ -64,65 +62,46 @@ In time some may need tweaking, version bumping, etc.
       helm repo add stable \
           https:// kubernetes-charts.storage.googleapis.com/
 
-* And remove Helm v2's Tiller files
-
-      git rm tiller/serviceaccount-tiller.yml
-      git rm tiller/rbac-tiller.yml
-      rmdir tiller
-      git commit -m "Helm v3 do not need Tiller"
-      git push
-
 #### Helm 2
 
-    brew install kubernetes-helm@2
-
-* Helm 2 require `Tiller` to be running in your cluster
-
-      kubectl create -f tiller/serviceaccount-tiller.yml
-      kubectl create -f tiller/rbac-tiller.yml
-      helm init --service-account tiller --history-max 200
-
-#### Switch from v3 to v2
-
-* In case you already have Helm 3 installed, you can revert to v2
-* https://github.com/helm/helm/issues/4547#issuecomment-423312200
-
-      brew unlink helm
-      brew install \
-       https://raw.githubusercontent.com/Homebrew/homebrew-core/2fbed24cb83d0ecc69b8004e69027e0d8eed5f9d/Formula/kubernetes-helm.rb
-      brew switch helm 2.16.1
-
-* You may have to force some soft links
-
-      brew link --overwrite helm
-
-
+* If you need to use Helm 2, refer to an earlier version of Lemmings more aimed at Helm 2 + Tiller
+* * https://github.com/flurdy/lemmings/tree/helm2
+* Note you may need to specify specific _flux.weave.works_ annotations and HelmRelease versions to keep it working as things start to assume Helm 3
 
 ### Configure cert-manager
 
 * Change email address in:
   * `issuer/issuer-staging.yml`
   * `issuer/issuer-prod.yml`
-*     git add -p issuer
-      git commit -m "Updated email in certificate issuers"
+*     git add -p issuer;
+      git commit -m "Updated email in certificate issuers";
       git push
 
 ### Install Flux
 
-    helm repo add fluxcd https://charts.fluxcd.io
-    kubectl create namespace flux
-    kubectl apply -f flux/crd-flux-helm.yml
-    helm upgrade -i flux \
-       --set helmOperator.create=true \
-       --set helmOperator.createCRD=false \
+    helm repo add fluxcd https://charts.fluxcd.io;
+    helm repo update;
+    kubectl create namespace flux;
+    kubectl apply -f flux/crd-flux-helm.yml;
+    helm upgrade -i flux fluxcd/flux \
        --set git.url=git@github.com:YOURUSERNAME/my-lemmings \
-       --namespace flux \
-       fluxcd/flux
+       --namespace flux
+
+* Replace _YOURUSERNAME/me-lemmings_ with your username and repository.
+
+#### Install Flux Helm Operator
+
+    helm upgrade -i helm-operator fluxcd/helm-operator \
+      --set git.ssh.secretName=flux-git-deploy \
+      --namespace flux \
+      --set helm.versions=v3
+
+####  Fluxctl & SSH
 
 * Install `fluxctl` and generate SSH key
 
-      brew install fluxctl
-      export FLUX_FORWARD_NAMESPACE=flux
+      brew install fluxctl;
+      export FLUX_FORWARD_NAMESPACE=flux;
       fluxctl identity --k8s-fwd-ns flux
 
 * Add Flux's SSH key to your github repo with write access:
@@ -138,16 +117,16 @@ If you waited a few minutes then your GitOps configured Kubernetes cluster is no
 
 ## Your first application
 
-* (We baked one earlier for you: `apps/hello`)
+* (We baked one earlier for you: `workflows/hello`)
 
-* View/Edit *apps/hello/deployment.yml*
+* View/Edit *workflows/hello/deployment.yml*
 
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: hello-deployment
         annotations:
-          flux.weave.works/automated: "true"
+          fluxcd.io/automated: "true"
       spec:
         selector:
           matchLabels:
@@ -164,11 +143,9 @@ If you waited a few minutes then your GitOps configured Kubernetes cluster is no
               ports:
               - containerPort: 80
 
-    * Note the `flux.weave.works/automated` annotation.
-       * It will change to `fluxcd.io/automated` in future flux versions.
-       * [www.weave.works/blog/flux-joins-the-cncf-sandbox](https://www.weave.works/blog/flux-joins-the-cncf-sandbox)
+    * Note the `fluxcd.io/automated` annotation which tells Flux to upgrade it when possible.
 
-* Edit *apps/hello/service.yml*
+* Edit *workflows/hello/service.yml*
 
       apiVersion: v1
       kind: Service
@@ -182,7 +159,7 @@ If you waited a few minutes then your GitOps configured Kubernetes cluster is no
            port: 80
            targetPort: 80
 
-* Edit *apps/hello/ingress.yml*
+* Edit *workflows/hello/ingress.yml*
 
       apiVersion: extensions/v1beta1
       kind: Ingress
@@ -245,7 +222,7 @@ If you waited a few minutes then your GitOps configured Kubernetes cluster is no
 
 * Now if ever [hub.docker.com/r/nginxdemos/hello](https://hub.docker.com/r/nginxdemos/hello) bumps its version to higher than *0.2*,
    Flux will detect it and bump your version in Kubernetes, and also commit the change back to your Git repository.
-* Unfortunately that image has not been updated for 2 years and unlikely to be updated, but when you start to use your own images they will be automagically updated if the deployment's annotation `flux.weave.works/automated` is set to true.
+* Unfortunately that image has not been updated for 2 years and unlikely to be updated, but when you start to use your own images they will be automagically updated if the deployment's annotation `fluxcd.io/automated` is set to true.
 
 ### Delete application
 
@@ -276,14 +253,15 @@ DO NOT commit them in plain text to the Git repository.
       kubeseal --fetch-cert \
          --controller-namespace=kube-system \
          --controller-name=sealed-secrets \
-         > secrets/sealed-secrets-cert.pem
-      git add secrets/sealed-secrets-cert.pem
+         > sealed-secrets/sealed-secrets-cert.pem
+      git add sealed-secrets/sealed-secrets-cert.pem
       git commit -m "Sealed secret public key"
 
 * Create secrets but do not apply them to the cluster.
 
    * E.g with the `--dry-run` argument.
 
+         mkdir secrets;
          kubectl create secret generic basic-auth \
             --from-literal=user=admin \
             --from-literal=password=admin \
@@ -293,7 +271,7 @@ DO NOT commit them in plain text to the Git repository.
 * Encrypt secret and transform to a sealed secret:
 
       kubeseal --format=yaml \
-         --cert=secrets/sealed-secrets-cert.pem \
+         --cert=sealed-secrets/sealed-secrets-cert.pem \
          < secrets/basic-auth.json \
          > secrets/secret-basic-auth.yml
       git add secrets/secret-basic-auth.yml
@@ -313,6 +291,9 @@ DO NOT commit them in plain text to the Git repository.
       fluxctl sync
       kubectl delete secret basic-auth
       kubectl delete SealedSecret basic-auth
+
+* Note: Step by step Docker Registry Cookbook
+* * [flurdy.com/docs/kubernetes/registry/kubernetes-docker-registry.html](https://flurdy.com/docs/kubernetes/registry/kubernetes-docker-registry.html)
 
 ## Go wild
 
@@ -336,7 +317,7 @@ DO NOT commit them in plain text to the Git repository.
 * Cloud provider CLI
   * [cloud.google.com/sdk/](https://cloud.google.com/sdk/)
 
-        brew install google-cloud-sdk
+        brew cask install google-cloud-sdk
 
   * [github.com/digitalocean/doctl](https://github.com/digitalocean/doctl)
 
@@ -371,6 +352,8 @@ DO NOT commit them in plain text to the Git repository.
 * [ramitsurana.github.io/awesome-kubernetes/](https://ramitsurana.github.io/awesome-kubernetes/)
 * [github.com/fluxcd/multi-tenancy](https://github.com/fluxcd/multi-tenancy)
 * [github.com/justinbarrick/fluxcloud](https://github.com/justinbarrick/fluxcloud)
+* [github.com/flux-web/flux-web](https://github.com/flux-web/flux-web)
+* [flurdy.com/docs/kubernetes/registry/kubernetes-docker-registry.html](https://flurdy.com/docs/kubernetes/registry/kubernetes-docker-registry.html)
 
 ### Notes:
 
