@@ -81,20 +81,23 @@ Includes Flux, Helm, cert-manager, Nginx Ingress Controller and Sealed Secrets.
 
     helm repo add fluxcd https://charts.fluxcd.io;
     helm repo update;
-    kubectl create namespace flux;
     kubectl apply -f flux/crd-flux-helm.yml;
-    helm upgrade -i flux fluxcd/flux \
+    kubectl create namespace flux;
+    helm upgrade -i flux \
+       --namespace=flux \
+       --set helm.versions=v3 \
        --set git.url=git@github.com:YOURUSERNAME/my-lemmings \
-       --namespace flux
+       fluxcd/flux
 
 * Replace _YOURUSERNAME/me-lemmings_ with your username and repository.
 
 #### Install Flux Helm Operator
 
-    helm upgrade -i helm-operator fluxcd/helm-operator \
-      --set git.ssh.secretName=flux-git-deploy \
-      --namespace flux \
-      --set helm.versions=v3
+    helm upgrade -i helm-operator \
+       --namespace=flux \
+       --set git.ssh.secretName=flux-git-deploy \
+       --set helm.versions=v3 \
+       fluxcd/helm-operator
 
 ####  Fluxctl & SSH
 
@@ -187,7 +190,7 @@ If you waited a few minutes then your GitOps configured Kubernetes cluster is no
 
 * If you made any changes:
 
-      git add app/hello
+      git add workflows/hello
       git commit -m "App: Hello"
       git push
 
@@ -226,7 +229,7 @@ If you waited a few minutes then your GitOps configured Kubernetes cluster is no
 
 ### Delete application
 
-    git rm -r apps/hello
+    git rm -r workflows/hello
     git commit -m "Removed app Hello"
     git push
     fluxctl sync
@@ -251,7 +254,7 @@ DO NOT commit them in plain text to the Git repository.
 * Fetch the cluster's Sealed Secrets' public key
 
       kubeseal --fetch-cert \
-         --controller-namespace=kube-system \
+         --controller-namespace=flux \
          --controller-name=sealed-secrets \
          > sealed-secrets/sealed-secrets-cert.pem
       git add sealed-secrets/sealed-secrets-cert.pem

@@ -5,17 +5,17 @@ metadata:
   namespace: cert-manager
   annotations:
     fluxcd.io/automated: "false"
-    fluxcd.io/tag.cert-manager-controller: glob:~v0.11.*
+    fluxcd.io/tag.cert-manager-controller: glob:~v0.14.*
 spec:
   releaseName: cert-manager
   target-namespace: cert-manager
   chart:
     repository: https://charts.jetstack.io
     name: cert-manager
-    version: 0.11.0
+    version: 0.14.0
   values:
     image:
       repository: quay.io/jetstack/cert-manager-controller
-      tag: v0.11.0
+      tag: v0.14.0
     webhook:
       enabled: false
