@@ -20,6 +20,10 @@ Includes Flux, Helm, cert-manager, Nginx Ingress Controller and Sealed Secrets.
 * 2020-02-13 Flux 1.1, fluxcd.io annotations, and Helm 3
 * 2019-11-07 Flux 0.16, flux.weave.works annotations and Helm 2
 
+## Warning
+
+This Lemmings guide has since 2021 been superseded by a Flux v2 based guide, the [Double Dragon](https://github.com/flurdy/doubledragon/).
+Please follow it for a more up to date cluster management with gitops.
 
 ## Pre requisite
 
